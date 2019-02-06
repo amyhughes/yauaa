@@ -79,6 +79,7 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
     private static final String NAME     = "name";
     private static final String VERSION  = "version";
     private static final String COMMENTS = "comments";
+    private static final String ENTRY    = "entry";
     private static final String KEYVALUE = "keyvalue";
     private static final String KEY      = "key";
     private static final String TEXT     = "text";
@@ -86,6 +87,7 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
     private static final String UUID     = "uuid";
     private static final String EMAIL    = "email";
     private static final String BASE64   = "base64";
+    private static final String VALUE    = "value";
 
     enum PathType {
         CHILD,
@@ -402,7 +404,7 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
 
     @Override
     public void enterCommentEntry(CommentEntryContext ctx) {
-        informSubstrings(ctx, "entry");
+        informSubstrings(ctx, ENTRY);
     }
 
     private void informSubstrings(ParserRuleContext ctx, String name) {
