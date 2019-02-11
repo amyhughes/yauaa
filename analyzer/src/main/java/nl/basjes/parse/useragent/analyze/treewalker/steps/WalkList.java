@@ -99,26 +99,25 @@ import java.util.Map;
 import java.util.Set;
 
 import static nl.basjes.parse.useragent.UserAgentAnalyzerDirect.MAX_PREFIX_HASH_MATCH;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.AGENT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.BASE64;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.COMMENTS;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.EMAIL;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.ENTRY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEYVALUE;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.NAME;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.PRODUCT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.TEXT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.URL;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.UUID;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.VALUE;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
 import static nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser.MatcherWordRangeContext;
 import static nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser.StepWordRangeContext;
 
 public class WalkList implements Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(WalkList.class);
-
-    private static final String AGENT    = "agent";
-    private static final String PRODUCT  = "product";
-    private static final String NAME     = "name";
-    private static final String VERSION  = "version";
-    private static final String COMMENTS = "comments";
-    private static final String ENTRY    = "entry";
-    private static final String KEYVALUE = "keyvalue";
-    private static final String KEY      = "key";
-    private static final String VALUE    = "value";
-    private static final String TEXT     = "text";
-    private static final String URL      = "url";
-    private static final String UUID     = "uuid";
-    private static final String EMAIL    = "email";
-    private static final String BASE64   = "base64";
 
     private final Map<String, Map<String, String>> lookups;
     private final Map<String, Set<String>>         lookupSets;

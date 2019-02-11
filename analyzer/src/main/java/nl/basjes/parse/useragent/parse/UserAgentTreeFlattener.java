@@ -68,26 +68,24 @@ import java.util.List;
 import java.util.Set;
 
 import static nl.basjes.parse.useragent.UserAgent.SYNTAX_ERROR;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.AGENT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.BASE64;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.COMMENTS;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.EMAIL;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.ENTRY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEYVALUE;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.NAME;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.PRODUCT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.TEXT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.URL;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.UUID;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
 import static nl.basjes.parse.useragent.utils.AntlrUtils.getSourceText;
 
 public class UserAgentTreeFlattener extends UserAgentBaseListener implements Serializable {
     private static final ParseTreeWalker WALKER = new ParseTreeWalker();
     private final Analyzer               analyzer;
-
-    private static final String AGENT    = "agent";
-    private static final String PRODUCT  = "product";
-    private static final String NAME     = "name";
-    private static final String VERSION  = "version";
-    private static final String COMMENTS = "comments";
-    private static final String ENTRY    = "entry";
-    private static final String KEYVALUE = "keyvalue";
-    private static final String KEY      = "key";
-    private static final String TEXT     = "text";
-    private static final String URL      = "url";
-    private static final String UUID     = "uuid";
-    private static final String EMAIL    = "email";
-    private static final String BASE64   = "base64";
-    private static final String VALUE    = "value";
 
     enum PathType {
         CHILD,
@@ -99,27 +97,27 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
         long child = 0;
         long version = 0;
         long comment = 0;
-        final String name;
+        AgentPathFragment name;
         String path;
         ParseTree ctx = null;
 
         // private constructor for serialization systems ONLY (like Kyro)
         private State() {
-            name = null;
+//            name = null;
         }
 
-        public State(String name) {
+        public State(AgentPathFragment name) {
             this.name = name;
         }
 
-        public State(ParseTree ctx, String name) {
+        public State(ParseTree ctx, AgentPathFragment name) {
             this.ctx = ctx;
             this.name = name;
         }
 
         public String calculatePath(PathType type, boolean fakeChild) {
             ParseTree node = ctx;
-            path = name;
+            path = name.toString();
             if (node == null) {
                 return path;
             }
@@ -211,11 +209,11 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
         rootState.calculatePath(PathType.CHILD, false);
         state.put(userAgentContext, rootState);
 
-        if (userAgent.hasSyntaxError()) {
-            inform(null, SYNTAX_ERROR, "true");
-        } else {
-            inform(null, SYNTAX_ERROR, "false");
-        }
+//        if (userAgent.hasSyntaxError()) {
+//            inform(null, SYNTAX_ERROR, "true");
+//        } else {
+//            inform(null, SYNTAX_ERROR, "false");
+//        }
 
         WALKER.walk(this, userAgentContext);
         return userAgent;
@@ -223,45 +221,45 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
 
     // =================================================================================
 
-    private String inform(ParseTree ctx, String path) {
+    private String inform(ParseTree ctx, AgentPathFragment path) {
         return inform(ctx, path, getSourceText((ParserRuleContext)ctx));
     }
 
-    private String inform(ParseTree ctx, String name, String value) {
+    private String inform(ParseTree ctx, AgentPathFragment name, String value) {
         return inform(ctx, ctx, name, value, false);
     }
 
-    private String inform(ParseTree ctx, String name, String value, boolean fakeChild) {
+    private String inform(ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
         return inform(ctx, ctx, name, value, fakeChild);
     }
 
-    private String inform(ParseTree stateCtx, ParseTree ctx, String name, String value, boolean fakeChild) {
-        String path = name;
-        if (stateCtx == null) {
-            analyzer.inform(path, value, ctx);
-        } else {
-            State myState = new State(stateCtx, name);
-
-            if (!fakeChild) {
-                state.put(stateCtx, myState);
-            }
-
-            PathType childType;
-            switch (name) {
-                case COMMENTS:
-                    childType = PathType.COMMENT;
-                    break;
-                case VERSION:
-                    childType = PathType.VERSION;
-                    break;
-                default:
-                    childType = PathType.CHILD;
-            }
-
-            path = myState.calculatePath(childType, fakeChild);
-            analyzer.inform(path, value, ctx);
-        }
-        return path;
+    private String inform(ParseTree stateCtx, ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
+        AgentPathFragment path = name;
+//        if (stateCtx == null) {
+////            analyzer.inform(path, value, ctx);
+//        } else {
+//            State myState = new State(stateCtx, name);
+//
+//            if (!fakeChild) {
+//                state.put(stateCtx, myState);
+//            }
+//
+//            PathType childType;
+//            switch (name) {
+//                case COMMENTS:
+//                    childType = PathType.COMMENT;
+//                    break;
+//                case VERSION:
+//                    childType = PathType.VERSION;
+//                    break;
+//                default:
+//                    childType = PathType.CHILD;
+//            }
+//
+//            path = myState.calculatePath(childType, fakeChild);
+//            analyzer.inform(path, value, ctx);
+//        }
+        return path.toString();
     }
 
 //  =================================================================================
@@ -331,7 +329,7 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
 
     @Override
     public void enterProductNameKeyValue(ProductNameKeyValueContext ctx) {
-        inform(ctx, "name.(1)keyvalue", ctx.getText(), false);
+//        inform(ctx, "name.(1)keyvalue", ctx.getText(), false);
         informSubstrings(ctx, NAME, true);
     }
 
@@ -407,39 +405,39 @@ public class UserAgentTreeFlattener extends UserAgentBaseListener implements Ser
         informSubstrings(ctx, ENTRY);
     }
 
-    private void informSubstrings(ParserRuleContext ctx, String name) {
+    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name) {
         informSubstrings(ctx, name, false);
     }
 
-    private void informSubstrings(ParserRuleContext ctx, String name, boolean fakeChild) {
+    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild) {
         informSubstrings(ctx, name, fakeChild, WordSplitter.getInstance());
     }
 
-    private void informSubVersions(ParserRuleContext ctx, String name) {
+    private void informSubVersions(ParserRuleContext ctx, AgentPathFragment name) {
         informSubstrings(ctx, name, false, VersionSplitter.getInstance());
     }
 
-    private void informSubstrings(ParserRuleContext ctx, String name, boolean fakeChild, Splitter splitter) {
-        String text = getSourceText(ctx);
-        String path = inform(ctx, name, text, fakeChild);
-        Set<Range> ranges = analyzer.getRequiredInformRanges(path);
-
-        if (ranges.size() > 4) { // Benchmarks showed this to be the breakeven point. (see below)
-            List<Pair<Integer, Integer>> splitList = splitter.createSplitList(text);
-            for (Range range : ranges) {
-                String value = splitter.getSplitRange(text, splitList, range);
-                if (value != null) {
-                    inform(ctx, ctx, name + range, value, true);
-                }
-            }
-        } else {
-            for (Range range : ranges) {
-                String value = splitter.getSplitRange(text, range);
-                if (value != null) {
-                    inform(ctx, ctx, name + range, value, true);
-                }
-            }
-        }
+    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild, Splitter splitter) {
+//        String text = getSourceText(ctx);
+//        String path = inform(ctx, name, text, fakeChild);
+//        Set<Range> ranges = analyzer.getRequiredInformRanges(path);
+//
+//        if (ranges.size() > 4) { // Benchmarks showed this to be the breakeven point. (see below)
+//            List<Pair<Integer, Integer>> splitList = splitter.createSplitList(text);
+//            for (Range range : ranges) {
+//                String value = splitter.getSplitRange(text, splitList, range);
+//                if (value != null) {
+//                    inform(ctx, ctx, name + range, value, true);
+//                }
+//            }
+//        } else {
+//            for (Range range : ranges) {
+//                String value = splitter.getSplitRange(text, range);
+//                if (value != null) {
+//                    inform(ctx, ctx, name + range, value, true);
+//                }
+//            }
+//        }
     }
 
     // # Ranges | Direct                   |  SplitList
