@@ -29,6 +29,8 @@ import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.MatcherList;
 import nl.basjes.parse.useragent.analyze.UselessMatcherException;
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor.Range;
+import nl.basjes.parse.useragent.parse.AgentPathFragment;
+import nl.basjes.parse.useragent.parse.PathMatcherTree;
 import nl.basjes.parse.useragent.parse.UserAgentTreeFlattener;
 import nl.basjes.parse.useragent.utils.Normalize;
 import nl.basjes.parse.useragent.utils.VersionSplitter;
@@ -81,6 +83,7 @@ import static nl.basjes.parse.useragent.UserAgent.OPERATING_SYSTEM_VERSION;
 import static nl.basjes.parse.useragent.UserAgent.PRE_SORTED_FIELDS_LIST;
 import static nl.basjes.parse.useragent.UserAgent.SET_ALL_FIELDS;
 import static nl.basjes.parse.useragent.UserAgent.SYNTAX_ERROR;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.AGENT;
 import static nl.basjes.parse.useragent.utils.YamlUtils.getExactlyOneNodeTuple;
 import static nl.basjes.parse.useragent.utils.YamlUtils.getKeyAsString;
 import static nl.basjes.parse.useragent.utils.YamlUtils.getStringValues;
@@ -95,12 +98,6 @@ import static nl.basjes.parse.useragent.utils.YauaaVersion.logVersion;
 @DefaultSerializer(UserAgentAnalyzerDirect.KryoSerializer.class)
 public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
 
-    // We set this to 1000000 always.
-    // Why?
-    // At the time of writing this the actual HashMap size needed about 410K entries.
-    // To keep the bins small the load factor of 0.75 already puts us at the capacity of 1048576
-    private static final int INFORM_ACTIONS_HASHMAP_CAPACITY = 1000000;
-
     private static final Logger LOG = LoggerFactory.getLogger(UserAgentAnalyzerDirect.class);
     private final List<Matcher> allMatchers = new ArrayList<>(5000);
     private final MatcherList zeroInputMatchers = new MatcherList(100);
@@ -109,8 +106,8 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         return allMatchers;
     }
 
-    private final Map<String, Set<MatcherAction>> informMatcherActions = new HashMap<>(INFORM_ACTIONS_HASHMAP_CAPACITY);
-    private transient Map<String, List<MappingNode>> matcherConfigs = new HashMap<>();
+    private final PathMatcherTree                informMatcherActions = new PathMatcherTree(AGENT, 1);
+    private transient Map<String, List<MappingNode>> matcherConfigs       = new HashMap<>();
 
     private boolean showMatcherStats = false;
     private boolean doingOnlyASingleTest = false;
@@ -180,7 +177,7 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         lines.add("Lookups      : " + ((lookups == null) ? 0 : lookups.size()));
         lines.add("LookupSets   : " + lookupSets.size());
         lines.add("Matchers     : " + allMatchers.size());
-        lines.add("Hashmap size : " + informMatcherActions.size());
+//        lines.add("Hashmap size : " + informMatcherActions.size());
         lines.add("Ranges map   : " + informMatcherActionRanges.size());
         lines.add("Testcases    : " + testCases.size());
 
@@ -446,7 +443,7 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         matchersHaveBeenInitialized = true;
         LOG.info("Built in {} msec : Hashmap {}, Ranges map:{}",
             (stop - start) / 1000000,
-            informMatcherActions.size(),
+            -42, // FIXME           informMatcherActions.size(),
             informMatcherActionRanges.size());
 
         for (Matcher matcher: allMatchers) {
@@ -1096,7 +1093,7 @@ config:
     }
 
     public void inform(String key, String value, ParseTree ctx) {
-        inform(key, key, value, ctx);
+        xinform(key, key, value, ctx);
         inform(key + "=\"" + value + '"', key, value, ctx);
 
         Set<Integer> lengths = getRequiredPrefixLengths(key);

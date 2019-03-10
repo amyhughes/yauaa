@@ -19,6 +19,7 @@ package nl.basjes.parse.useragent.parse;
 
 import nl.basjes.parse.useragent.analyze.MatcherAction;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ import java.util.Set;
 
 import static java.util.Locale.ENGLISH;
 
-public class PathMatcherTree {
+public class PathMatcherTree implements Serializable {
 
     private PathMatcherTree parent = null;
 
@@ -106,9 +107,9 @@ public class PathMatcherTree {
             results.add(fragmentName);
         } else {
             for (Map.Entry<AgentPathFragment, List<PathMatcherTree>> childrenPerType : children.entrySet()) {
-                List<PathMatcherTree> xx = childrenPerType.getValue();
-                for (int childIndex = 1; childIndex < xx.size(); childIndex++) {
-                    PathMatcherTree child = xx.get(childIndex);
+                List<PathMatcherTree> childrenPerTypeValue = childrenPerType.getValue();
+                for (int childIndex = 1; childIndex < childrenPerTypeValue.size(); childIndex++) {
+                    PathMatcherTree child = childrenPerTypeValue.get(childIndex);
                     if (child != null) {
                         List<String> childStrings = child.getChildrenStrings();
                         for (String childString : childStrings) {
@@ -118,7 +119,6 @@ public class PathMatcherTree {
                 }
             }
         }
-
         return results;
     }
 

@@ -55,12 +55,18 @@ public class TestParseMatcherTree {
         PathMatcherTree child2 = root
             .getOrCreateChild(PRODUCT, 1)
             .getOrCreateChild(COMMENTS, 2)
-            .getOrCreateChild(ENTRY, 2)
+            .getOrCreateChild(ENTRY, 2);
+
+        child2
             .getOrCreateChild(PRODUCT, 1)
             .getOrCreateChild(VERSION, 1);
 
-        LOG.info("1: {}", child1.toString());
-        LOG.info("2: {}", child2.toString());
+        child2
+            .getOrCreateChild(PRODUCT, 3)
+            .getOrCreateChild(VERSION, 2);
+
+//        LOG.info("1: {}", child1.toString());
+//        LOG.info("2: {}", child2.toString());
 
         root.getChildrenStrings().forEach(s -> {
             LOG.info("==> {}", s);
