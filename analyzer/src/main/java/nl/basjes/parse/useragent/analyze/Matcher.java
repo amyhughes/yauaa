@@ -65,7 +65,7 @@ public class Matcher implements Serializable {
     }
 
     // Package private constructor for testing purposes only
-    Matcher(Analyzer analyzer) {
+    public Matcher(Analyzer analyzer) { // FIXME: NOT IN FINAL VERSION: Making this public is bad
         this.analyzer = analyzer;
         this.fixedStringActions = new ArrayList<>();
         this.variableActions = new ArrayList<>();

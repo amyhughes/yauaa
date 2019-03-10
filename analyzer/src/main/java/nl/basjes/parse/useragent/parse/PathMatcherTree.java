@@ -19,6 +19,7 @@ package nl.basjes.parse.useragent.parse;
 
 import nl.basjes.parse.useragent.analyze.MatcherAction;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -33,7 +34,7 @@ public class PathMatcherTree {
     private final AgentPathFragment fragment;
     private final int index;
 
-    private PathMatcherTree[][] subtree;
+    private Map<AgentPathFragment, PathMatcherTree[]> subtree;
 
     public PathMatcherTree(AgentPathFragment fragment, int index) {
         this.fragment = fragment;
@@ -42,4 +43,16 @@ public class PathMatcherTree {
 
     private Set<MatcherAction> actions = new TreeSet<>();
 
+    public void addMatcherAction(MatcherAction action) {
+        actions.add(action);
+    }
+    public void addMatcherAction(Set<MatcherAction> newActions) {
+        actions.addAll(newActions);
+    }
+
+    public PathMatcherTree addChild(AgentPathFragment newChild) {
+        if (subtree[newChild] == null) {
+            subtree[newChild] = new PathMatcherTree[];
+        }
+    }
 }
