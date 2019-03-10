@@ -23,12 +23,18 @@ import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.MatcherRequireAction;
 import nl.basjes.parse.useragent.analyze.UselessMatcherException;
 import org.junit.Test;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.AGENT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.COMMENTS;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.ENTRY;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.PRODUCT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
 
 public class TestParseMatcherTree {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TestParseMatcherTree.class);
 
     @Test
     public void developFakeTest() throws UselessMatcherException {
@@ -39,11 +45,26 @@ public class TestParseMatcherTree {
 
         PathMatcherTree root    = new PathMatcherTree(AGENT, 1);
 
-        root.addMatcherAction(action);
-        PathMatcherTree child1 = root.addChild(PRODUCT);
-        child1.addMatcherAction(action);
-        PathMatcherTree child2 = root.addChild(PRODUCT);
-        child2.addMatcherAction(action);
+        PathMatcherTree child1 = root
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(COMMENTS, 2)
+            .getOrCreateChild(ENTRY, 3)
+            .getOrCreateChild(PRODUCT, 4)
+            .getOrCreateChild(VERSION, 5);
+
+        PathMatcherTree child2 = root
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(COMMENTS, 2)
+            .getOrCreateChild(ENTRY, 2)
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(VERSION, 1);
+
+        LOG.info("1: {}", child1.toString());
+        LOG.info("2: {}", child2.toString());
+
+        root.getChildrenStrings().forEach(s -> {
+            LOG.info("==> {}", s);
+        });
     }
 
 }
