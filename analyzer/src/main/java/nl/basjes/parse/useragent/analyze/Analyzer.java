@@ -18,6 +18,7 @@
 package nl.basjes.parse.useragent.analyze;
 
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor.Range;
+import nl.basjes.parse.useragent.parse.PathMatcherTree;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.Serializable;
@@ -25,15 +26,15 @@ import java.util.Map;
 import java.util.Set;
 
 public interface Analyzer extends Serializable {
-    void inform(String path, String value, ParseTree ctx);
+    void inform(PathMatcherTree path, String value, ParseTree ctx);
 
-    void informMeAbout(MatcherAction matcherAction, String keyPattern);
+    void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree);
 
     void lookingForRange(String treeName, Range range);
 
     Set<Range> getRequiredInformRanges(String treeName);
 
-    void informMeAboutPrefix(MatcherAction matcherAction, String treeName, String prefix);
+    void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix);
 
     Set<Integer> getRequiredPrefixLengths(String treeName);
 
@@ -44,4 +45,6 @@ public interface Analyzer extends Serializable {
     Map<String, Map<String, String>> getLookups();
 
     Map<String, Set<String>> getLookupSets();
+
+    PathMatcherTree getPathTreeRoot();
 }

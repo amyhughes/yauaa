@@ -31,7 +31,12 @@ public enum AgentPathFragment {
     UUID("uuid"),
     EMAIL("email"),
     BASE64("base64"),
-    VALUE("value");
+    VALUE("value"),
+
+    // Compare entries
+    EQUALS("Equals"),
+    WORDRANGE("WordRange"),
+    STARTSWITH("StartsWith");
 
     private final String name;
 

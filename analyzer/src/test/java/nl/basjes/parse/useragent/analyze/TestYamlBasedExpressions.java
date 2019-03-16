@@ -127,4 +127,14 @@ public class TestYamlBasedExpressions {
         Assert.assertTrue(uaa.runTests(false, false));
     }
 
+    @Test
+    public void runDevelopTest() { //FIXME: Remove
+        UserAgentAnalyzerTester uaa = new UserAgentAnalyzerTester("classpath*:DevelopTest.yaml");
+        uaa.setVerbose(true);
+        uaa.initializeMatchers();
+
+        Assert.assertTrue(uaa.runTests(false, false));
+    }
+
+
 }

@@ -29,7 +29,6 @@ import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.MatcherList;
 import nl.basjes.parse.useragent.analyze.UselessMatcherException;
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor.Range;
-import nl.basjes.parse.useragent.parse.AgentPathFragment;
 import nl.basjes.parse.useragent.parse.PathMatcherTree;
 import nl.basjes.parse.useragent.parse.UserAgentTreeFlattener;
 import nl.basjes.parse.useragent.utils.Normalize;
@@ -132,6 +131,11 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
     @Override
     public Map<String, Set<String>> getLookupSets() {
         return lookupSets;
+    }
+
+    @Override
+    public PathMatcherTree getPathTreeRoot() {
+        return informMatcherActions;
     }
 
     protected UserAgentTreeFlattener flattener;
@@ -262,6 +266,8 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         if (!delayInitialization) {
             initializeMatchers();
         }
+
+
     }
 
     protected void verifyWeAreNotAskingForImpossibleFields() {
@@ -399,7 +405,7 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
                 int startSkipped = skippedMatchers;
                 for (MappingNode map : matcherConfig) {
                     try {
-                        allMatchers.add(new Matcher(this, lookups, lookupSets, wantedFieldNames, map, configFilename));
+                        allMatchers.add(new Matcher(this, wantedFieldNames, map, configFilename));
                         totalNumberOfMatchers++;
                     } catch (UselessMatcherException ume) {
                         skippedMatchers++;
@@ -458,6 +464,10 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         }
 
         touchedMatchers = new MatcherList(16);
+
+        // FIXME: Devlopment debugging ONLY
+        LOG.warn("Final tree:");
+        informMatcherActions.getChildrenStrings().forEach(s -> LOG.warn("--> {}", s));
     }
 
     public Set<String> getAllPossibleFieldNames() {
@@ -739,8 +749,9 @@ config:
     private final Map<String, Set<Integer>> informMatcherActionPrefixesLengths = new HashMap<>(1000);
 
     @Override
-    public void informMeAboutPrefix(MatcherAction matcherAction, String treeName, String prefix) {
-        this.informMeAbout(matcherAction, treeName + "{\"" + firstCharactersForPrefixHash(prefix, MAX_PREFIX_HASH_MATCH) + "\"");
+    public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
+        String treeName = pathMatcherTree.toString(); // FIXME:
+//        this.informMeAbout(matcherAction, treeName + "{\"" + firstCharactersForPrefixHash(prefix, MAX_PREFIX_HASH_MATCH) + "\"");
         Set<Integer> lengths = informMatcherActionPrefixesLengths.computeIfAbsent(treeName, k -> new HashSet<>(4));
         lengths.add(firstCharactersForPrefixHashLength(prefix, MAX_PREFIX_HASH_MATCH));
     }
@@ -750,11 +761,12 @@ config:
         return informMatcherActionPrefixesLengths.get(treeName);
     }
 
-    public void informMeAbout(MatcherAction matcherAction, String keyPattern) {
-        String hashKey = keyPattern.toLowerCase();
-        Set<MatcherAction> analyzerSet = informMatcherActions
-            .computeIfAbsent(hashKey, k -> new HashSet<>());
-        analyzerSet.add(matcherAction);
+    public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
+        LOG.info("[informMeAbout] tree: {}   -->  action {}", pathMatcherTree, matcherAction);
+
+//        Set<MatcherAction> analyzerSet = informMatcherActions
+//            .computeIfAbsent(hashKey, k -> new HashSet<>());
+//        analyzerSet.add(matcherAction);
     }
 
     private boolean verbose = false;
@@ -1092,8 +1104,9 @@ config:
         return informMatcherActionRanges.computeIfAbsent(treeName, k -> Collections.emptySet());
     }
 
-    public void inform(String key, String value, ParseTree ctx) {
-        xinform(key, key, value, ctx);
+    public void inform(PathMatcherTree pathMatcherTree, String value, ParseTree ctx) {
+        String key = pathMatcherTree.toString(); // FIXME
+        inform(key, key, value, ctx);
         inform(key + "=\"" + value + '"', key, value, ctx);
 
         Set<Integer> lengths = getRequiredPrefixLengths(key);
@@ -1108,7 +1121,7 @@ config:
     }
 
     private void inform(String match, String key, String value, ParseTree ctx) {
-        Set<MatcherAction> relevantActions = informMatcherActions.get(match.toLowerCase(Locale.ENGLISH));
+        Set<MatcherAction> relevantActions = null; // FIXME informMatcherActions.get(match.toLowerCase(Locale.ENGLISH));
         if (verbose) {
             if (relevantActions == null) {
                 LOG.info("--- Have (0): {}", match);
@@ -1214,13 +1227,14 @@ config:
             return result;
         }
 
-        public void inform(String path, String value, ParseTree ctx) {
+        public void inform(PathMatcherTree pathMatcherTree, String value, ParseTree ctx) {
+            String path = pathMatcherTree.toString();
             values.add(path);
             values.add(path + "=\"" + value + "\"");
             values.add(path + "{\"" + firstCharactersForPrefixHash(value, MAX_PREFIX_HASH_MATCH) + "\"");
         }
 
-        public void informMeAbout(MatcherAction matcherAction, String keyPattern) {
+        public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
             // Not needed to only get all paths
         }
 
@@ -1234,7 +1248,7 @@ config:
         }
 
         @Override
-        public void informMeAboutPrefix(MatcherAction matcherAction, String treeName, String prefix) {
+        public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
             // Not needed to only get all paths
         }
 
@@ -1254,6 +1268,11 @@ config:
         public Map<String, Set<String>> getLookupSets() {
             // Not needed to only get all paths
             return Collections.emptyMap();
+        }
+
+        @Override
+        public PathMatcherTree getPathTreeRoot() {
+            return null; // FIXME: Correct?
         }
     }
 

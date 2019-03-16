@@ -20,7 +20,7 @@ package nl.basjes.parse.useragent.analyze;
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor.Range;
 import nl.basjes.parse.useragent.analyze.treewalker.TreeExpressionEvaluator;
 import nl.basjes.parse.useragent.analyze.treewalker.steps.WalkList.WalkResult;
-import nl.basjes.parse.useragent.parse.AgentPathFragment;
+import nl.basjes.parse.useragent.parse.PathMatcherTree;
 import nl.basjes.parse.useragent.parser.UserAgentTreeWalkerBaseVisitor;
 import nl.basjes.parse.useragent.parser.UserAgentTreeWalkerLexer;
 import nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser;
@@ -76,15 +76,18 @@ import static nl.basjes.parse.useragent.parse.AgentPathFragment.BASE64;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.COMMENTS;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.EMAIL;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.ENTRY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.EQUALS;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEY;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.KEYVALUE;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.NAME;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.PRODUCT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.STARTSWITH;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.TEXT;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.URL;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.UUID;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.VALUE;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.WORDRANGE;
 import static nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser.MatcherCleanVersionContext;
 import static nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser.MatcherPathContext;
 import static nl.basjes.parse.useragent.parser.UserAgentTreeWalkerParser.MatcherPathIsNullContext;
@@ -194,11 +197,17 @@ public abstract class MatcherAction implements Serializable {
 
         mustHaveMatches = !evaluator.usesIsNull();
 
-        // TESTING CODE:
-        List<String> testInformPath = new ArrayList<>();
+//        LOG.error("======================");
+        LOG.error("Adding Expression {}", matchExpression);
+//        LOG.error("");
+        int informs = calculateInformPath(this, matcher.getPathTreeRoot(), requiredPattern);
+//        LOG.error("----------------------");
 
-        testInformPath.add("N:"+AGENT);
-        int informs = calculateInformPath(this, testInformPath, requiredPattern);
+//        LOG.error("Tree after adding expression");
+//        matcher.getPathTreeRoot().getChildrenStrings().forEach(s -> LOG.error("--> {}", s));
+//        LOG.error("======================");
+//        LOG.error("");
+//        LOG.error("");
 
         // If this is based on a variable we do not need any matches from the hashmap.
         if (mustHaveMatches && informs == 0) {
@@ -352,204 +361,247 @@ public abstract class MatcherAction implements Serializable {
         /**
          * Applies this function to the given arguments.
          *
-         * @param treePath The name of the current tree.
+         * @param pathMatcherTree The current node in the lookup tree.
          * @param tree     The actual location in the parseTree
          * @return the number of informs done
          */
-        int calculateInformPath(MatcherAction action, List<String> treePath, ParserRuleContext tree);
+        int calculateInformPath(MatcherAction action, PathMatcherTree pathMatcherTree, ParserRuleContext tree);
     }
 
     private static final Map<Class, CalculateInformPathFunction> CALCULATE_INFORM_PATH = new HashMap<>();
 
     static {
         // -------------
-        CALCULATE_INFORM_PATH.put(MatcherBaseContext.class,             (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherBaseContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherPathIsNullContext.class,       (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherPathIsNullContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherBaseContext.class,             (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherBaseContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherPathIsNullContext.class,       (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherPathIsNullContext) tree).matcher()));
 
         // -------------
-        CALCULATE_INFORM_PATH.put(MatcherExtractContext.class,          (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherExtractContext) tree).expression));
+        CALCULATE_INFORM_PATH.put(MatcherExtractContext.class,          (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherExtractContext) tree).expression));
 
         // -------------
-        CALCULATE_INFORM_PATH.put(MatcherVariableContext.class,         (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherVariableContext) tree).expression));
+        CALCULATE_INFORM_PATH.put(MatcherVariableContext.class,         (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherVariableContext) tree).expression));
 
         // -------------
-        CALCULATE_INFORM_PATH.put(MatcherPathContext.class,             (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherPathContext) tree).basePath()));
-        CALCULATE_INFORM_PATH.put(MatcherConcatContext.class,           (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherConcatContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherConcatPrefixContext.class,     (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherConcatPrefixContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherConcatPostfixContext.class,    (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherConcatPostfixContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherNormalizeBrandContext.class,   (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherNormalizeBrandContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherCleanVersionContext.class,     (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherCleanVersionContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherPathLookupContext.class,       (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherPathLookupContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherPathLookupPrefixContext.class,       (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherPathLookupPrefixContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherPathIsInLookupPrefixContext.class,       (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherPathIsInLookupPrefixContext) tree).matcher()));
-        CALCULATE_INFORM_PATH.put(MatcherWordRangeContext.class,        (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((MatcherWordRangeContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherPathContext.class,             (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherPathContext) tree).basePath()));
+        CALCULATE_INFORM_PATH.put(MatcherConcatContext.class,           (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherConcatContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherConcatPrefixContext.class,     (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherConcatPrefixContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherConcatPostfixContext.class,    (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherConcatPostfixContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherNormalizeBrandContext.class,   (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherNormalizeBrandContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherCleanVersionContext.class,     (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherCleanVersionContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherPathLookupContext.class,       (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherPathLookupContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherPathLookupPrefixContext.class,       (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherPathLookupPrefixContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherPathIsInLookupPrefixContext.class,       (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherPathIsInLookupPrefixContext) tree).matcher()));
+        CALCULATE_INFORM_PATH.put(MatcherWordRangeContext.class,        (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((MatcherWordRangeContext) tree).matcher()));
 
         // -------------
-        CALCULATE_INFORM_PATH.put(PathVariableContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(PathVariableContext.class, (action, pathMatcherTree, tree) -> {
             LOG.info("Need variable {}", ((PathVariableContext) tree).variable.getText());
 //            action.matcher.informMeAboutVariable(action, ((PathVariableContext) tree).variable.getText();
             return 0;
         });
 
-        CALCULATE_INFORM_PATH.put(PathWalkContext.class, (action, treePath, tree) ->
-            calculateInformPath(action, treePath, ((PathWalkContext) tree).nextStep));
+        CALCULATE_INFORM_PATH.put(PathWalkContext.class, (action, pathMatcherTree, tree) ->
+            calculateInformPath(action, pathMatcherTree, ((PathWalkContext) tree).nextStep));
 
         // -------------
-        CALCULATE_INFORM_PATH.put(StepDownAgentContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownAgentContext.class, (action, pathMatcherTree, tree) -> {
             StepDownAgentContext thisTree = ((StepDownAgentContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(AGENT.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(AGENT, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownProductContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownProductContext.class, (action, pathMatcherTree, tree) -> {
             StepDownProductContext thisTree = ((StepDownProductContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(PRODUCT.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(PRODUCT, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownNameContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownNameContext.class, (action, pathMatcherTree, tree) -> {
             StepDownNameContext thisTree = ((StepDownNameContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(NAME.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(NAME, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownVersionContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownVersionContext.class, (action, pathMatcherTree, tree) -> {
             StepDownVersionContext thisTree = ((StepDownVersionContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(VERSION.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(VERSION, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownCommentsContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownCommentsContext.class, (action, pathMatcherTree, tree) -> {
             StepDownCommentsContext thisTree = ((StepDownCommentsContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(COMMENTS.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(COMMENTS, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
 
-        CALCULATE_INFORM_PATH.put(StepDownEntryContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownEntryContext.class, (action, pathMatcherTree, tree) -> {
             StepDownEntryContext thisTree = ((StepDownEntryContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(ENTRY.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(ENTRY, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownTextContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownTextContext.class, (action, pathMatcherTree, tree) -> {
             StepDownTextContext thisTree = ((StepDownTextContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(TEXT.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(TEXT, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
 
-        CALCULATE_INFORM_PATH.put(StepDownUrlContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownUrlContext.class, (action, pathMatcherTree, tree) -> {
             StepDownUrlContext thisTree = ((StepDownUrlContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(URL.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(URL, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
 
-        CALCULATE_INFORM_PATH.put(StepDownEmailContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownEmailContext.class, (action, pathMatcherTree, tree) -> {
             StepDownEmailContext thisTree = ((StepDownEmailContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(EMAIL.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(EMAIL, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownBase64Context.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownBase64Context.class, (action, pathMatcherTree, tree) -> {
             StepDownBase64Context thisTree = ((StepDownBase64Context) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(BASE64.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(BASE64, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownUuidContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownUuidContext.class, (action, pathMatcherTree, tree) -> {
             StepDownUuidContext thisTree = ((StepDownUuidContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(UUID.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(UUID, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepDownKeyvalueContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownKeyvalueContext.class, (action, pathMatcherTree, tree) -> {
             StepDownKeyvalueContext thisTree = ((StepDownKeyvalueContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(KEYVALUE.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(KEYVALUE, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
 
-        CALCULATE_INFORM_PATH.put(StepDownKeyContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownKeyContext.class, (action, pathMatcherTree, tree) -> {
             StepDownKeyContext thisTree = ((StepDownKeyContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(KEY.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(KEY, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
 
-        CALCULATE_INFORM_PATH.put(StepDownValueContext.class, (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepDownValueContext.class, (action, pathMatcherTree, tree) -> {
             StepDownValueContext thisTree = ((StepDownValueContext) tree);
-            treePath.add(NUMBER_RANGE_VISITOR.visit(thisTree.numberRange()).toString());
-            treePath.add(VALUE.toString());
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            int total = 0;
+            for (int i : NUMBER_RANGE_VISITOR.visit(thisTree.numberRange())) {
+                PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(VALUE, i);
+                total+= calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
+            }
+            return total;
         });
 
-        CALCULATE_INFORM_PATH.put(StepEqualsValueContext.class,         (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepEqualsValueContext.class,         (action, pathMatcherTree, tree) -> {
             StepEqualsValueContext thisTree = ((StepEqualsValueContext)tree);
-            LOG.info("Want {}={}", treePath, thisTree.value.getText());
-            //            action.matcher.informMeAbout(action, treePath + "=\"" + thisTree.value.getText() + "\"");
+            PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(EQUALS, 0);
+            nextPathMatcherTree.makeItEquals(thisTree.value.getText());
+            nextPathMatcherTree.addMatcherAction(action);
             return 1;
         });
 
-        CALCULATE_INFORM_PATH.put(StepStartsWithValueContext.class,     (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepStartsWithValueContext.class,     (action, pathMatcherTree, tree) -> {
             StepStartsWithValueContext thisTree = ((StepStartsWithValueContext)tree);
-            LOG.info("Want {} startsWith {}", treePath, thisTree.value.getText());
-//            action.matcher.informMeAboutPrefix(action, treePath, thisTree.value.getText());
+            PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(STARTSWITH, 0);
+            nextPathMatcherTree.makeItStartsWith(thisTree.value.getText());
+            nextPathMatcherTree.addMatcherAction(action);
             return 1;
         });
 
-        CALCULATE_INFORM_PATH.put(StepWordRangeContext.class,           (action, treePath, tree) -> {
+        CALCULATE_INFORM_PATH.put(StepWordRangeContext.class,           (action, pathMatcherTree, tree) -> {
             StepWordRangeContext thisTree = ((StepWordRangeContext)tree);
             Range range = WordRangeVisitor.getRange(thisTree.wordRange());
-            LOG.info("Want {} startsWith {}", treePath, range);
-//            action.matcher.lookingForRange(treePath, range);
-            treePath.add("Range: "+ range);
-            return calculateInformPath(action, treePath, thisTree.nextStep);
+            PathMatcherTree nextPathMatcherTree = pathMatcherTree.getOrCreateChild(WORDRANGE, 0);
+            nextPathMatcherTree.makeItWordRange(range.getFirst(), range.getLast());
+            return calculateInformPath(action, nextPathMatcherTree, thisTree.nextStep);
         });
     }
 
-    private static int calculateInformPath(MatcherAction action, List<String> treePath, ParserRuleContext tree) {
+    private static int calculateInformPath(MatcherAction action, PathMatcherTree pathMatcherTree, ParserRuleContext tree) {
         if (tree == null) {
-            LOG.info("Have: {}", treePath);
-//            action.matcher.informMeAbout(action, treePath);
+            pathMatcherTree.addMatcherAction(action);
+//            action.matcher.informMeAbout(action, pathMatcherTree);
             return 1;
         }
 
         CalculateInformPathFunction function = CALCULATE_INFORM_PATH.get(tree.getClass());
         if (function != null) {
-            return function.calculateInformPath(action, treePath, tree);
+            return function.calculateInformPath(action, pathMatcherTree, tree);
         }
 
-        LOG.info("Want : {}", treePath);
-//        action.matcher.informMeAbout(action, treePath);
+        pathMatcherTree.addMatcherAction(action);
+//        action.matcher.informMeAbout(action, pathMatcherTree);
         return 1;
     }
 

@@ -18,6 +18,7 @@
 package nl.basjes.parse.useragent.analyze;
 
 import nl.basjes.parse.useragent.UserAgent;
+import nl.basjes.parse.useragent.parse.PathMatcherTree;
 import nl.basjes.parse.useragent.utils.YamlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +81,10 @@ public class Matcher implements Serializable {
         return analyzer.getLookupSets();
     }
 
+    public PathMatcherTree getPathTreeRoot() {
+        return analyzer.getPathTreeRoot();
+    }
+
     static class ConfigLine {
         public enum Type {
             VARIABLE,
@@ -100,8 +105,6 @@ public class Matcher implements Serializable {
     }
 
     public Matcher(Analyzer analyzer,
-                   Map<String, Map<String, String>> lookups,
-                   Map<String, Set<String>> lookupSets,
                    List<String> wantedFieldNames,
                    MappingNode matcherConfig,
                    String filename) throws UselessMatcherException {
@@ -309,12 +312,12 @@ public class Matcher implements Serializable {
         analyzer.lookingForRange(treeName, range);
     }
 
-    public void informMeAbout(MatcherAction matcherAction, String keyPattern) {
-        analyzer.informMeAbout(matcherAction, keyPattern);
+    public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
+        analyzer.informMeAbout(matcherAction, pathMatcherTree);
     }
 
-    public void informMeAboutPrefix(MatcherAction matcherAction, String keyPattern, String prefix) {
-        analyzer.informMeAboutPrefix(matcherAction, keyPattern, prefix);
+    public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
+        analyzer.informMeAboutPrefix(matcherAction, pathMatcherTree, prefix);
     }
 
     private final Map<String, Set<MatcherAction>> informMatcherActionsAboutVariables = new HashMap<>(8);

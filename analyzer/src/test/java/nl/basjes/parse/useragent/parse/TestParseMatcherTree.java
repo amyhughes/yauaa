@@ -26,11 +26,18 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.AGENT;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.COMMENTS;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.ENTRY;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.EQUALS;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.NAME;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.PRODUCT;
+import static nl.basjes.parse.useragent.parse.AgentPathFragment.STARTSWITH;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
+import static org.junit.Assert.assertTrue;
 
 public class TestParseMatcherTree {
 
@@ -65,12 +72,84 @@ public class TestParseMatcherTree {
             .getOrCreateChild(PRODUCT, 3)
             .getOrCreateChild(VERSION, 2);
 
+        root
+            .getOrCreateChild(PRODUCT, 2)
+            .getOrCreateChild(NAME, 1)
+            .getOrCreateChild(STARTSWITH, 0)
+                .makeItStartsWith("ItStartsWithThis");
+
+        root
+            .getOrCreateChild(PRODUCT, 2)
+            .getOrCreateChild(NAME, 1)
+            .getOrCreateChild(EQUALS, 0)
+            .makeItEquals("IsEqualTo");
+
 //        LOG.info("1: {}", child1.toString());
 //        LOG.info("2: {}", child2.toString());
 
         root.getChildrenStrings().forEach(s -> {
             LOG.info("==> {}", s);
         });
+
+        root.verifyTree();
+    }
+
+
+
+    @Test
+    public void developFakeTest2() throws UselessMatcherException {
+
+        UserAgentAnalyzerDirect userAgentAnalyzerDirect = UserAgentAnalyzerDirect.newBuilder().build();
+        Matcher         matcher = new Matcher(userAgentAnalyzerDirect);
+        MatcherAction   action  = new MatcherRequireAction("agent.product.name", matcher);
+
+        List<String> expected = new ArrayList<>();
+
+        PathMatcherTree root    = new PathMatcherTree(AGENT, 1);
+
+        root
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(COMMENTS, 2)
+            .getOrCreateChild(ENTRY, 10);
+        expected.add("agent.(1)product.(2)comments.(10)entry");
+
+        root
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(COMMENTS, 2)
+            .getOrCreateChild(ENTRY, 5);
+        expected.add("agent.(1)product.(2)comments.(5)entry");
+
+        root
+            .getOrCreateChild(PRODUCT, 1)
+            .getOrCreateChild(COMMENTS, 2)
+            .getOrCreateChild(ENTRY, 1);
+        expected.add("agent.(1)product.(2)comments.(1)entry");
+
+        root
+            .getOrCreateChild(PRODUCT, 2)
+            .getOrCreateChild(NAME, 1)
+            .getOrCreateChild(STARTSWITH, 0)
+            .makeItStartsWith("ItStartsWithThis");
+        expected.add("agent.(2)product.(1)name{\"ItStartsWithThis\"");
+
+
+        root
+            .getOrCreateChild(PRODUCT, 2)
+            .getOrCreateChild(NAME, 1)
+            .getOrCreateChild(EQUALS, 0)
+            .makeItEquals("IsEqualTo");
+        expected.add("agent.(2)product.(1)name=\"IsEqualTo\"");
+
+        root.verifyTree();
+
+        List<String> result = root.getChildrenStrings();
+
+        result.forEach(s -> {
+            LOG.info("==> {}", s);
+        });
+
+        expected.forEach(e -> assertTrue("Missing " + e, result.contains(e)));
+
     }
 
 }
