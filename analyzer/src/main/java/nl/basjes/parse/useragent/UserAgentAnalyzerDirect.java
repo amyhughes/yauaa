@@ -33,7 +33,6 @@ import nl.basjes.parse.useragent.parse.MatcherTree;
 import nl.basjes.parse.useragent.parse.UserAgentTreeFlattener;
 import nl.basjes.parse.useragent.utils.Normalize;
 import nl.basjes.parse.useragent.utils.VersionSplitter;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -447,9 +446,9 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         allMatchers.forEach(Matcher::initialize);
         long stop = System.nanoTime();
         matchersHaveBeenInitialized = true;
-        LOG.info("Built in {} msec : Hashmap {}, Ranges map:{}",
+        LOG.info("Built in {} msec : TreeSize {} nodes, Ranges map:{}",
             (stop - start) / 1000000,
-            -42, // FIXME           informMatcherActions.size(),
+            informMatcherActions.size(),
             informMatcherActionRanges.size());
 
         for (Matcher matcher: allMatchers) {
@@ -465,10 +464,11 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
 
         touchedMatchers = new MatcherList(16);
 
-        // FIXME: Devlopment debugging ONLY
-        List<String> childStrings = informMatcherActions.getChildrenStrings();
-        LOG.warn("Final tree: {}", childStrings.size());
-        childStrings.forEach(s -> LOG.warn("--> {}", s));
+        // FIX ME: Devlopment debugging ONLY
+//        List<String> childStrings = informMatcherActions.getChildrenStrings();
+//        LOG.warn(">Final tree: {}", childStrings.size());
+//        childStrings.forEach(s -> LOG.warn("--> {}", s));
+//        LOG.warn("<Final tree: {}", childStrings.size());
     }
 
     public Set<String> getAllPossibleFieldNames() {
@@ -849,20 +849,20 @@ config:
         }
 
 // FIXME: Reenable safetynet       try {
-            userAgent = flattener.parse(userAgent);
+        userAgent = flattener.parse(userAgent);
 
-            // Fire all Analyzers with any input
-            for (Matcher matcher : touchedMatchers) {
-                matcher.analyze(userAgent);
-            }
+        // Fire all Analyzers with any input
+        for (Matcher matcher : touchedMatchers) {
+            matcher.analyze(userAgent);
+        }
 
-            // Fire all Analyzers that should not get input
-            for (Matcher matcher : zeroInputMatchers) {
-                matcher.analyze(userAgent);
-            }
+        // Fire all Analyzers that should not get input
+        for (Matcher matcher : zeroInputMatchers) {
+            matcher.analyze(userAgent);
+        }
 
-            userAgent.processSetAll();
-            return hardCodedPostProcessing(userAgent);
+        userAgent.processSetAll();
+        return hardCodedPostProcessing(userAgent);
 //        } catch (RuntimeException rte) {
 ////             If this occurs then someone has found a previously undetected problem.
 ////             So this is a safety for something that 'can' but 'should not' occur.
@@ -1105,44 +1105,45 @@ config:
         return informMatcherActionRanges.computeIfAbsent(treeName, k -> Collections.emptySet());
     }
 
-    public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
-        String key = matcherTree.toString(); // FIXME
-        inform(key, key, value, ctx);
-        inform(key + "=\"" + value + '"', key, value, ctx);
-
-        Set<Integer> lengths = getRequiredPrefixLengths(key);
-        if (lengths != null) {
-            int valueLength = value.length();
-            for (Integer prefixLength : lengths) {
-                if (valueLength >= prefixLength) {
-                    inform(key + "{\"" + firstCharactersForPrefixHash(value, prefixLength) + '"', key, value, ctx);
-                }
-            }
-        }
-    }
-
-    private void inform(String match, String key, String value, ParseTree ctx) {
-        Set<MatcherAction> relevantActions = null; // FIXME informMatcherActions.get(match.toLowerCase(Locale.ENGLISH));
-        if (verbose) {
-            if (relevantActions == null) {
-                LOG.info("--- Have (0): {}", match);
-            } else {
-                LOG.info("+++ Have ({}): {}", relevantActions.size(), match);
-
-                int count = 1;
-                for (MatcherAction action : relevantActions) {
-                    LOG.info("+++ -------> ({}): {}", count, action);
-                    count++;
-                }
-            }
-        }
-
-//        if (relevantActions != null) {
-//            for (MatcherAction matcherAction : relevantActions) {
-//                matcherAction.inform(key, value, ctx);
+//    @Override
+//    public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
+//        String key = matcherTree.toString(); // FIXME
+//        inform(key, key, value, ctx);
+//        inform(key + "=\"" + value + '"', key, value, ctx);
+//
+//        Set<Integer> lengths = getRequiredPrefixLengths(key);
+//        if (lengths != null) {
+//            int valueLength = value.length();
+//            for (Integer prefixLength : lengths) {
+//                if (valueLength >= prefixLength) {
+//                    inform(key + "{\"" + firstCharactersForPrefixHash(value, prefixLength) + '"', key, value, ctx);
+//                }
 //            }
 //        }
-    }
+//    }
+
+//    private void inform(String match, String key, String value, ParseTree ctx) {
+//        Set<MatcherAction> relevantActions = null; // FIXME informMatcherActions.get(match.toLowerCase(Locale.ENGLISH));
+//        if (verbose) {
+//            if (relevantActions == null) {
+//                LOG.info("--- Have (0): {}", match);
+//            } else {
+//                LOG.info("+++ Have ({}): {}", relevantActions.size(), match);
+//
+//                int count = 1;
+//                for (MatcherAction action : relevantActions) {
+//                    LOG.info("+++ -------> ({}): {}", count, action);
+//                    count++;
+//                }
+//            }
+//        }
+//
+////        if (relevantActions != null) {
+////            for (MatcherAction matcherAction : relevantActions) {
+////                matcherAction.inform(key, value, ctx);
+////            }
+////        }
+//    }
 
 
     /**
@@ -1215,6 +1216,8 @@ config:
 
         private final UserAgent result;
 
+        private final MatcherTree matcherTreeRoot = new MatcherTree(AGENT, 1);
+
         GetAllPathsAnalyzer(String useragent) {
             flattener = new UserAgentTreeFlattener(this);
             result = flattener.parse(useragent);
@@ -1228,12 +1231,12 @@ config:
             return result;
         }
 
-        public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
-            String path = matcherTree.toString();
-            values.add(path);
-            values.add(path + "=\"" + value + "\"");
-            values.add(path + "{\"" + firstCharactersForPrefixHash(value, MAX_PREFIX_HASH_MATCH) + "\"");
-        }
+//        public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
+//            String path = matcherTree.toString();
+//            values.add(path);
+//            values.add(path + "=\"" + value + "\"");
+//            values.add(path + "{\"" + firstCharactersForPrefixHash(value, MAX_PREFIX_HASH_MATCH) + "\"");
+//        }
 
         public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
             // Not needed to only get all paths
@@ -1273,7 +1276,7 @@ config:
 
         @Override
         public MatcherTree getMatcherTreeRoot() {
-            return null; // FIXME: Correct?
+            return matcherTreeRoot;
         }
     }
 

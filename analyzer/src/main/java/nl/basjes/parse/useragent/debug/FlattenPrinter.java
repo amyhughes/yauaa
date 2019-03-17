@@ -21,7 +21,6 @@ import nl.basjes.parse.useragent.analyze.Analyzer;
 import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor;
 import nl.basjes.parse.useragent.parse.MatcherTree;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -36,10 +35,10 @@ public class FlattenPrinter implements Analyzer {
         this.outputStream = outputStream;
     }
 
-    @Override
-    public void inform(MatcherTree path, String value, ParseTree ctx) {
-        outputStream.println(path);
-    }
+//    @Override
+//    public void inform(MatcherTree path, String value, ParseTree ctx) {
+//        outputStream.println(path);
+//    }
 
     @Override
     public void informMeAbout(MatcherAction matcherAction, MatcherTree keyPattern) {

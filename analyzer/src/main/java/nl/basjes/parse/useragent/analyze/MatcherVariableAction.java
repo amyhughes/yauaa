@@ -77,8 +77,7 @@ public class MatcherVariableAction extends MatcherAction {
 
             if (interestedActions != null && !interestedActions.isEmpty()) {
                 for (MatcherAction action : interestedActions) {
-// FIXME: Variables won't work yet
-//                    action.inform(variableName, newlyFoundValue.getValue(), newlyFoundValue.getTree());
+                    action.inform(null, newlyFoundValue.getTree(), newlyFoundValue.getValue());
                 }
             }
         }

@@ -17,13 +17,6 @@
 
 package nl.basjes.parse.useragent.parse;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public enum AgentPathFragment {
     AGENT("agent"),
     PRODUCT("product"),

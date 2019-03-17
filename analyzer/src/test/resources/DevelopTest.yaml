@@ -24,28 +24,32 @@ config:
 # FIXME: DROP THIS FILE WHEN FINISHED DEVELOPING THIS
 
 - matcher:
-    options:
-    - 'verbose'
-#    variable:
-#    - 'Foo: agent.product.name^.name'
+#    options:
+#    - 'verbose'
+    variable:
+    - 'Foo: agent.product.name^.version'
 #    require:
 #    - 'agent.(6)product.name{"StartsWithThis"'    #path{value
 #    - 'agent.(4-5)product.name="IsThisExactly"'   #path=value
 #    - 'agent.(2-3)product.name[-3]="123"'         #path[n]=value
 #    - 'agent.(1)product.name'                     #path          exists
     extract:
-      - 'Agent              :    1 : agent'
-      - 'AgentProduct       :    1 : agent.(1)product'
-      - 'AgentProductName   :    1 : agent.(1)product.(1)name'
-      - 'AgentProductVersion:    1 : agent.(1)product.(1)version'
+    - 'Foo: 1 : @Foo^.comments.entry.product.version'
+#      - 'Agent                :    1 : agent'
+#      - 'AgentProduct         :    1 : agent.(1)product'
+#      - 'AgentProductName     :    1 : agent.(1)product.(1)name'
+#      - 'AgentProductVersion  :    1 : agent.(1)product.(1)version'
+#      - 'AgentProductComments :    1 : agent.(1)product.(1)version^.comments.entry.product.name="FooComment"'
 
 - test:
-    options:
-    - 'verbose'
+#    options:
+#    - 'verbose'
     input:
        user_agent_string                   : 'Foo/1.0 (FooComment/2) Bar/3 (BarComment/4)'
     expected:
-       Agent                                : 'Foo/1.0 (FooComment/2) Bar/3 (BarComment/4)'
-       AgentProduct                         : 'Foo/1.0 (FooComment/2)'
-       AgentProductName                     : 'Foo'
-       AgentProductVersion                  : '1.0'
+        Foo : 'Foos'
+#       Agent                                : 'Foo/1.0 (FooComment/2) Bar/3 (BarComment/4)'
+#       AgentProduct                         : 'Foo/1.0 (FooComment/2)'
+#       AgentProductName                     : 'Foo'
+#       AgentProductVersion                  : '1.0'
+#       AgentProductComments                 : 'FooComment'

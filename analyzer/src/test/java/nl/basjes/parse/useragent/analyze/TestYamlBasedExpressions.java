@@ -134,20 +134,20 @@ public class TestYamlBasedExpressions {
         uaa.setVerbose(true);
         uaa.initializeMatchers();
 
-        Assert.assertTrue(uaa.runTests(true, false));
+        Assert.assertTrue(uaa.runTests(false, false));
     }
 
 
-    @Test
-    public void runDevelopTestLoadEverythingWithouttesting() { //FIXME: Remove
-
-        UserAgentAnalyzer uaa = UserAgentAnalyzer.newBuilder().dropTests().immediateInitialization().build();
-
+//    @Test
+//    public void runDevelopTestLoadEverythingWithouttesting() { //FIXME: Remove
+//
+//        UserAgentAnalyzer uaa = UserAgentAnalyzer.newBuilder().dropTests().immediateInitialization().build();
+//
 //        UserAgentAnalyzerTester uaa = new UserAgentAnalyzerTester();
 //        uaa.setVerbose(true);
 //        uaa.initializeMatchers();
 //
 //        Assert.assertTrue(uaa.runTests(false, false));
-    }
+//    }
 
 }

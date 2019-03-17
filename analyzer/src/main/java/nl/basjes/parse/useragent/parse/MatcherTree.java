@@ -215,4 +215,16 @@ public class MatcherTree implements Serializable {
         }
         return true;
     }
+
+    public long size() {
+        long size = 1;
+        for (Map.Entry<AgentPathFragment, Pair<List<MatcherTree>, UserAgentGetChildrenVisitor>> childrenPerType : children.entrySet()) {
+            for (MatcherTree child : childrenPerType.getValue().getKey()) {
+                if (child != null) {
+                    size += child.size();
+                }
+            }
+        }
+        return size;
+    }
 }

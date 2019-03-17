@@ -56,13 +56,9 @@ import nl.basjes.parse.useragent.parser.UserAgentParser.UserAgentContext;
 import nl.basjes.parse.useragent.parser.UserAgentParser.UuIdContext;
 import nl.basjes.parse.useragent.parser.UserAgentParser.VersionWordsContext;
 import nl.basjes.parse.useragent.utils.AntlrUtils;
-import nl.basjes.parse.useragent.utils.Splitter;
-import nl.basjes.parse.useragent.utils.VersionSplitter;
-import nl.basjes.parse.useragent.utils.WordSplitter;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -89,7 +85,6 @@ import static nl.basjes.parse.useragent.parse.AgentPathFragment.TEXT;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.URL;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.UUID;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
-import static nl.basjes.parse.useragent.utils.AntlrUtils.getSourceText;
 
 // FIXME: Checkstyle cleanup
 // CHECKSTYLE.OFF: LineLength
@@ -164,7 +159,7 @@ public class UserAgentTreeFlattener implements Serializable {
 
 
     private static void match(AgentPathFragment fragment, MatcherTree mTree, ParseTree uaTree, String value) {
-        LOG.warn("[match] F:{} | MT:{} | PT:{} | V:{} |", fragment, mTree, AntlrUtils.getSourceText(uaTree), value);
+//        LOG.warn("[match] F:{} | MT:{} | PT:{} | V:{} |", fragment, mTree, AntlrUtils.getSourceText(uaTree), value);
 
         if (mTree == null) {// || uaTree == null) {
             return; // Nothing can be here.
@@ -174,10 +169,10 @@ public class UserAgentTreeFlattener implements Serializable {
         Set<MatcherAction> matcherActions = mTree.getActions();
         if (!matcherActions.isEmpty()) {
             String informValue = value == null ? AntlrUtils.getSourceText(uaTree) : value;
-            matcherActions.forEach(action -> {
-                LOG.info("[Inform] A:{} | MT:{} | V:{} |", action, mTree, informValue); // FIXME: Only debug
-                action.inform(mTree, uaTree, informValue);
-            });
+            matcherActions.forEach(action ->
+                // LOG.info("[Inform] A:{} | MT:{} | V:{} |", action, mTree, informValue);
+                action.inform(mTree, uaTree, informValue)
+            );
         }
 
         // For each of the possible child fragments
@@ -315,20 +310,20 @@ public class UserAgentTreeFlattener implements Serializable {
 
     // =================================================================================
 
-    private String inform(ParseTree ctx, AgentPathFragment path) {
-        return inform(ctx, path, getSourceText((ParserRuleContext)ctx));
-    }
+//    private String inform(ParseTree ctx, AgentPathFragment path) {
+//        return inform(ctx, path, getSourceText((ParserRuleContext)ctx));
+//    }
 
-    private String inform(ParseTree ctx, AgentPathFragment name, String value) {
-        return inform(ctx, ctx, name, value, false);
-    }
+//    private String inform(ParseTree ctx, AgentPathFragment name, String value) {
+//        return inform(ctx, ctx, name, value, false);
+//    }
 
-    private String inform(ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
-        return inform(ctx, ctx, name, value, fakeChild);
-    }
+//    private String inform(ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
+//        return inform(ctx, ctx, name, value, fakeChild);
+//    }
 
-    private String inform(ParseTree stateCtx, ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
-        AgentPathFragment path = name;
+//    private String inform(ParseTree stateCtx, ParseTree ctx, AgentPathFragment name, String value, boolean fakeChild) {
+//        AgentPathFragment path = name;
 //        if (stateCtx == null) {
 //            analyzer.inform(path, value, ctx);
 //        } else {
@@ -353,8 +348,8 @@ public class UserAgentTreeFlattener implements Serializable {
 //            path = myState.calculatePath(childType, fakeChild);
 //            analyzer.inform(path, value, ctx);
 //        }
-        return path.toString();
-    }
+//        return path.toString();
+//    }
 
 //  =================================================================================
 
@@ -381,19 +376,19 @@ public class UserAgentTreeFlattener implements Serializable {
     //  =================================================================================
 
 
-    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name) {
-        informSubstrings(ctx, name, false);
-    }
+//    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name) {
+//        informSubstrings(ctx, name, false);
+//    }
 
-    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild) {
-        informSubstrings(ctx, name, fakeChild, WordSplitter.getInstance());
-    }
+//    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild) {
+//        informSubstrings(ctx, name, fakeChild, WordSplitter.getInstance());
+//    }
 
-    private void informSubVersions(ParserRuleContext ctx, AgentPathFragment name) {
-        informSubstrings(ctx, name, false, VersionSplitter.getInstance());
-    }
+//    private void informSubVersions(ParserRuleContext ctx, AgentPathFragment name) {
+//        informSubstrings(ctx, name, false, VersionSplitter.getInstance());
+//    }
 
-    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild, Splitter splitter) {
+//    private void informSubstrings(ParserRuleContext ctx, AgentPathFragment name, boolean fakeChild, Splitter splitter) {
 //        String text = getSourceText(ctx);
 //        String path = inform(ctx, name, text, fakeChild);
 //        Set<Range> ranges = analyzer.getRequiredInformRanges(path);
@@ -414,7 +409,7 @@ public class UserAgentTreeFlattener implements Serializable {
 //                }
 //            }
 //        }
-    }
+//    }
 
     // # Ranges | Direct                   |  SplitList
     // 1        |    1.664 ± 0.010  ns/op  |    99.378 ± 1.548  ns/op

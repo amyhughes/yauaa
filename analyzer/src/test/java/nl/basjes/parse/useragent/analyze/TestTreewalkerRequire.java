@@ -22,7 +22,6 @@ import nl.basjes.parse.useragent.analyze.treewalker.TreeExpressionEvaluator;
 import nl.basjes.parse.useragent.analyze.treewalker.steps.Step;
 import nl.basjes.parse.useragent.analyze.treewalker.steps.WalkList;
 import nl.basjes.parse.useragent.parse.MatcherTree;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -348,10 +347,10 @@ public class TestTreewalkerRequire {
         }
 
 
-        @Override
-        public void inform(MatcherTree path, String value, ParseTree ctx) {
-            // Not used during tests
-        }
+//        @Override
+//        public void inform(MatcherTree path, String value, ParseTree ctx) {
+//            // Not used during tests
+//        }
 
         @Override
         public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
