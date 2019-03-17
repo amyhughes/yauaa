@@ -29,7 +29,7 @@ import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.MatcherList;
 import nl.basjes.parse.useragent.analyze.UselessMatcherException;
 import nl.basjes.parse.useragent.analyze.WordRangeVisitor.Range;
-import nl.basjes.parse.useragent.parse.PathMatcherTree;
+import nl.basjes.parse.useragent.parse.MatcherTree;
 import nl.basjes.parse.useragent.parse.UserAgentTreeFlattener;
 import nl.basjes.parse.useragent.utils.Normalize;
 import nl.basjes.parse.useragent.utils.VersionSplitter;
@@ -105,7 +105,7 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         return allMatchers;
     }
 
-    private final PathMatcherTree                informMatcherActions = new PathMatcherTree(AGENT, 1);
+    private final     MatcherTree                    informMatcherActions = new MatcherTree(AGENT, 1);
     private transient Map<String, List<MappingNode>> matcherConfigs       = new HashMap<>();
 
     private boolean showMatcherStats = false;
@@ -134,7 +134,7 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
     }
 
     @Override
-    public PathMatcherTree getPathTreeRoot() {
+    public MatcherTree getMatcherTreeRoot() {
         return informMatcherActions;
     }
 
@@ -466,8 +466,9 @@ public class UserAgentAnalyzerDirect implements Analyzer, Serializable {
         touchedMatchers = new MatcherList(16);
 
         // FIXME: Devlopment debugging ONLY
-        LOG.warn("Final tree:");
-        informMatcherActions.getChildrenStrings().forEach(s -> LOG.warn("--> {}", s));
+        List<String> childStrings = informMatcherActions.getChildrenStrings();
+        LOG.warn("Final tree: {}", childStrings.size());
+        childStrings.forEach(s -> LOG.warn("--> {}", s));
     }
 
     public Set<String> getAllPossibleFieldNames() {
@@ -749,8 +750,8 @@ config:
     private final Map<String, Set<Integer>> informMatcherActionPrefixesLengths = new HashMap<>(1000);
 
     @Override
-    public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
-        String treeName = pathMatcherTree.toString(); // FIXME:
+    public void informMeAboutPrefix(MatcherAction matcherAction, MatcherTree matcherTree, String prefix) {
+        String treeName = matcherTree.toString(); // FIXME:
 //        this.informMeAbout(matcherAction, treeName + "{\"" + firstCharactersForPrefixHash(prefix, MAX_PREFIX_HASH_MATCH) + "\"");
         Set<Integer> lengths = informMatcherActionPrefixesLengths.computeIfAbsent(treeName, k -> new HashSet<>(4));
         lengths.add(firstCharactersForPrefixHashLength(prefix, MAX_PREFIX_HASH_MATCH));
@@ -761,8 +762,8 @@ config:
         return informMatcherActionPrefixesLengths.get(treeName);
     }
 
-    public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
-        LOG.info("[informMeAbout] tree: {}   -->  action {}", pathMatcherTree, matcherAction);
+    public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
+        LOG.info("[informMeAbout] tree: {}   -->  action {}", matcherTree, matcherAction);
 
 //        Set<MatcherAction> analyzerSet = informMatcherActions
 //            .computeIfAbsent(hashKey, k -> new HashSet<>());
@@ -847,7 +848,7 @@ config:
             }
         }
 
-        try {
+// FIXME: Reenable safetynet       try {
             userAgent = flattener.parse(userAgent);
 
             // Fire all Analyzers with any input
@@ -862,14 +863,14 @@ config:
 
             userAgent.processSetAll();
             return hardCodedPostProcessing(userAgent);
-        } catch (RuntimeException rte) {
-            // If this occurs then someone has found a previously undetected problem.
-            // So this is a safety for something that 'can' but 'should not' occur.
-            userAgent.reset();
-            userAgent = setAsHacker(userAgent, 10000);
-            userAgent.setForced("HackerAttackVector", "Yauaa Exploit", 10000);
-            return hardCodedPostProcessing(userAgent);
-        }
+//        } catch (RuntimeException rte) {
+////             If this occurs then someone has found a previously undetected problem.
+////             So this is a safety for something that 'can' but 'should not' occur.
+//            userAgent.reset();
+//            userAgent = setAsHacker(userAgent, 10000);
+//            userAgent.setForced("HackerAttackVector", "Yauaa Exploit", 10000);
+//            return hardCodedPostProcessing(userAgent);
+//        }
     }
 
     private static final List<String> HARD_CODED_GENERATED_FIELDS = new ArrayList<>();
@@ -1104,8 +1105,8 @@ config:
         return informMatcherActionRanges.computeIfAbsent(treeName, k -> Collections.emptySet());
     }
 
-    public void inform(PathMatcherTree pathMatcherTree, String value, ParseTree ctx) {
-        String key = pathMatcherTree.toString(); // FIXME
+    public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
+        String key = matcherTree.toString(); // FIXME
         inform(key, key, value, ctx);
         inform(key + "=\"" + value + '"', key, value, ctx);
 
@@ -1136,11 +1137,11 @@ config:
             }
         }
 
-        if (relevantActions != null) {
-            for (MatcherAction matcherAction : relevantActions) {
-                matcherAction.inform(key, value, ctx);
-            }
-        }
+//        if (relevantActions != null) {
+//            for (MatcherAction matcherAction : relevantActions) {
+//                matcherAction.inform(key, value, ctx);
+//            }
+//        }
     }
 
 
@@ -1227,14 +1228,14 @@ config:
             return result;
         }
 
-        public void inform(PathMatcherTree pathMatcherTree, String value, ParseTree ctx) {
-            String path = pathMatcherTree.toString();
+        public void inform(MatcherTree matcherTree, String value, ParseTree ctx) {
+            String path = matcherTree.toString();
             values.add(path);
             values.add(path + "=\"" + value + "\"");
             values.add(path + "{\"" + firstCharactersForPrefixHash(value, MAX_PREFIX_HASH_MATCH) + "\"");
         }
 
-        public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
+        public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
             // Not needed to only get all paths
         }
 
@@ -1248,7 +1249,7 @@ config:
         }
 
         @Override
-        public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
+        public void informMeAboutPrefix(MatcherAction matcherAction, MatcherTree matcherTree, String prefix) {
             // Not needed to only get all paths
         }
 
@@ -1271,7 +1272,7 @@ config:
         }
 
         @Override
-        public PathMatcherTree getPathTreeRoot() {
+        public MatcherTree getMatcherTreeRoot() {
             return null; // FIXME: Correct?
         }
     }

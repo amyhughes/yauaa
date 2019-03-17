@@ -21,7 +21,6 @@ import nl.basjes.parse.useragent.UserAgentAnalyzerDirect;
 import nl.basjes.parse.useragent.analyze.Matcher;
 import nl.basjes.parse.useragent.analyze.MatcherAction;
 import nl.basjes.parse.useragent.analyze.MatcherRequireAction;
-import nl.basjes.parse.useragent.analyze.UselessMatcherException;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,27 +38,27 @@ import static nl.basjes.parse.useragent.parse.AgentPathFragment.STARTSWITH;
 import static nl.basjes.parse.useragent.parse.AgentPathFragment.VERSION;
 import static org.junit.Assert.assertTrue;
 
-public class TestParseMatcherTree {
+public class TestMatcherTree {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestParseMatcherTree.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TestMatcherTree.class);
 
     @Test
-    public void developFakeTest() throws UselessMatcherException {
+    public void developFakeTest() {
 
         UserAgentAnalyzerDirect userAgentAnalyzerDirect = UserAgentAnalyzerDirect.newBuilder().build();
         Matcher         matcher = new Matcher(userAgentAnalyzerDirect);
         MatcherAction   action  = new MatcherRequireAction("agent.product.name", matcher);
 
-        PathMatcherTree root    = new PathMatcherTree(AGENT, 1);
+        MatcherTree root = new MatcherTree(AGENT, 1);
 
-        PathMatcherTree child1 = root
+        MatcherTree child1 = root
             .getOrCreateChild(PRODUCT, 1)
             .getOrCreateChild(COMMENTS, 2)
             .getOrCreateChild(ENTRY, 3)
             .getOrCreateChild(PRODUCT, 4)
             .getOrCreateChild(VERSION, 5);
 
-        PathMatcherTree child2 = root
+        MatcherTree child2 = root
             .getOrCreateChild(PRODUCT, 1)
             .getOrCreateChild(COMMENTS, 2)
             .getOrCreateChild(ENTRY, 2);
@@ -95,9 +94,8 @@ public class TestParseMatcherTree {
     }
 
 
-
     @Test
-    public void developFakeTest2() throws UselessMatcherException {
+    public void testBasicTreeConstruction() {
 
         UserAgentAnalyzerDirect userAgentAnalyzerDirect = UserAgentAnalyzerDirect.newBuilder().build();
         Matcher         matcher = new Matcher(userAgentAnalyzerDirect);
@@ -105,7 +103,7 @@ public class TestParseMatcherTree {
 
         List<String> expected = new ArrayList<>();
 
-        PathMatcherTree root    = new PathMatcherTree(AGENT, 1);
+        MatcherTree root = new MatcherTree(AGENT, 1);
 
         root
             .getOrCreateChild(PRODUCT, 1)

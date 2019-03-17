@@ -18,7 +18,7 @@
 package nl.basjes.parse.useragent.analyze;
 
 import nl.basjes.parse.useragent.UserAgent;
-import nl.basjes.parse.useragent.parse.PathMatcherTree;
+import nl.basjes.parse.useragent.parse.MatcherTree;
 import nl.basjes.parse.useragent.utils.YamlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,8 +81,8 @@ public class Matcher implements Serializable {
         return analyzer.getLookupSets();
     }
 
-    public PathMatcherTree getPathTreeRoot() {
-        return analyzer.getPathTreeRoot();
+    public MatcherTree getPathTreeRoot() {
+        return analyzer.getMatcherTreeRoot();
     }
 
     static class ConfigLine {
@@ -312,12 +312,12 @@ public class Matcher implements Serializable {
         analyzer.lookingForRange(treeName, range);
     }
 
-    public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
-        analyzer.informMeAbout(matcherAction, pathMatcherTree);
+    public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
+        analyzer.informMeAbout(matcherAction, matcherTree);
     }
 
-    public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
-        analyzer.informMeAboutPrefix(matcherAction, pathMatcherTree, prefix);
+    public void informMeAboutPrefix(MatcherAction matcherAction, MatcherTree matcherTree, String prefix) {
+        analyzer.informMeAboutPrefix(matcherAction, matcherTree, prefix);
     }
 
     private final Map<String, Set<MatcherAction>> informMatcherActionsAboutVariables = new HashMap<>(8);

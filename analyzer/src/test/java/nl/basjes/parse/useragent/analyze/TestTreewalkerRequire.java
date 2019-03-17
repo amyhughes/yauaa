@@ -21,7 +21,7 @@ import nl.basjes.parse.useragent.UserAgent;
 import nl.basjes.parse.useragent.analyze.treewalker.TreeExpressionEvaluator;
 import nl.basjes.parse.useragent.analyze.treewalker.steps.Step;
 import nl.basjes.parse.useragent.analyze.treewalker.steps.WalkList;
-import nl.basjes.parse.useragent.parse.PathMatcherTree;
+import nl.basjes.parse.useragent.parse.MatcherTree;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static nl.basjes.parse.useragent.UserAgentAnalyzerDirect.MAX_PREFIX_HASH_MATCH;
-import static nl.basjes.parse.useragent.UserAgentAnalyzerDirect.firstCharactersForPrefixHash;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -350,12 +349,12 @@ public class TestTreewalkerRequire {
 
 
         @Override
-        public void inform(PathMatcherTree path, String value, ParseTree ctx) {
+        public void inform(MatcherTree path, String value, ParseTree ctx) {
             // Not used during tests
         }
 
         @Override
-        public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
+        public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
             // Not used during tests
         }
 
@@ -371,7 +370,7 @@ public class TestTreewalkerRequire {
         }
 
         @Override
-        public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree treeName, String prefix) {
+        public void informMeAboutPrefix(MatcherAction matcherAction, MatcherTree treeName, String prefix) {
             // Not used during tests
         }
 
@@ -381,7 +380,7 @@ public class TestTreewalkerRequire {
         }
 
         @Override
-        public PathMatcherTree getPathTreeRoot() {
+        public MatcherTree getMatcherTreeRoot() {
             return null; // FIXME: Correct?
         }
     }
@@ -394,14 +393,14 @@ public class TestTreewalkerRequire {
         }
 
         @Override
-        public void informMeAbout(MatcherAction matcherAction, PathMatcherTree pathMatcherTree) {
-            receivedValues.add(pathMatcherTree.toString());
+        public void informMeAbout(MatcherAction matcherAction, MatcherTree matcherTree) {
+            receivedValues.add(matcherTree.toString());
         }
 
         @Override
-        public void informMeAboutPrefix(MatcherAction matcherAction, PathMatcherTree pathMatcherTree, String prefix) {
+        public void informMeAboutPrefix(MatcherAction matcherAction, MatcherTree matcherTree, String prefix) {
             fail("FIX THIS");
-//            informMeAbout(matcherAction, pathMatcherTree + "{\"" + firstCharactersForPrefixHash(prefix, MAX_PREFIX_HASH_MATCH) + "\"");
+//            informMeAbout(matcherAction, matcherTree + "{\"" + firstCharactersForPrefixHash(prefix, MAX_PREFIX_HASH_MATCH) + "\"");
         }
 
         @Override

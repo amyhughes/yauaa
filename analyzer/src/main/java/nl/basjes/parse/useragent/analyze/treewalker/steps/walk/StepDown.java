@@ -35,9 +35,9 @@ import java.util.Iterator;
 @DefaultSerializer(StepDown.KryoSerializer.class)
 public class StepDown extends Step {
 
-    private final int start;
-    private final int end;
-    private final String name;
+    private final     int                         start;
+    private final     int                         end;
+    private final     AgentPathFragment           name;
     private transient UserAgentGetChildrenVisitor userAgentGetChildrenVisitor;
 
     /**
@@ -78,7 +78,7 @@ public class StepDown extends Step {
     }
 
     private StepDown(NumberRangeList numberRange, AgentPathFragment name) {
-        this.name = name.toString(); // FIXME
+        this.name = name;
         this.start = numberRange.getStart();
         this.end = numberRange.getEnd();
         setDefaultFieldValues();

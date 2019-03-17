@@ -17,6 +17,7 @@
 
 package nl.basjes.parse.useragent.analyze;
 
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
 import nl.basjes.parse.useragent.debug.UserAgentAnalyzerTester;
 import org.junit.Assert;
 import org.junit.Test;
@@ -133,8 +134,20 @@ public class TestYamlBasedExpressions {
         uaa.setVerbose(true);
         uaa.initializeMatchers();
 
-        Assert.assertTrue(uaa.runTests(false, false));
+        Assert.assertTrue(uaa.runTests(true, false));
     }
 
+
+    @Test
+    public void runDevelopTestLoadEverythingWithouttesting() { //FIXME: Remove
+
+        UserAgentAnalyzer uaa = UserAgentAnalyzer.newBuilder().dropTests().immediateInitialization().build();
+
+//        UserAgentAnalyzerTester uaa = new UserAgentAnalyzerTester();
+//        uaa.setVerbose(true);
+//        uaa.initializeMatchers();
+//
+//        Assert.assertTrue(uaa.runTests(false, false));
+    }
 
 }
