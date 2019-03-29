@@ -15,7 +15,6 @@
 # limitations under the License.
 #
 
-# Apparently the Facebook apps send out extra fields in the useragent string telling a lot about the device.
 # See also
 # http://mpulp.mobi/2012/01/funky-user-agent-on-facebook-iphone-app/
 # http://stackoverflow.com/questions/11414006/is-this-a-facebook-for-ios-webview-user-agent
